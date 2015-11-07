@@ -2,7 +2,7 @@
 
 from __future__ import division
 from random import randint
-print('Welcome to 3 Card Poker.')
+print('Welcome to Three Card Poker Simulator!')
 
 deck = {
     0: {'name': 'AS', 'suit': 'Spades', 'val': 14},
@@ -72,6 +72,18 @@ handMap = {
 }
 
 
+handMap6 = {
+    7: 'Royal Flush (6 Card Bonus)',
+    6: 'Straight Flush (6 Card Bonus)',
+    5: 'Four of a Kind (6 Card Bonus)',
+    4: 'Full House (6 Card Bonus)',
+    3: 'Flush (6 Card Bonus)',
+    2: 'Straight (6 Card Bonus)',
+    1: 'Three of a Kind (6 Card Bonus)',
+    0: 'Non Winning Hand (6 Card Bonus)'
+}
+
+
 strategyMap = {
     5: 'King High',
     4: 'Queen Ten',
@@ -80,6 +92,9 @@ strategyMap = {
     1: 'Queen High',
     0: 'Blind'
 }
+
+
+suits = ['Spades', 'Diamonds', 'Hearts', 'Clubs']
 
 
 def printDeck():
@@ -100,7 +115,181 @@ def shuffleDeck():
 
 
 def printHand(hand):
-    return hand[0]['name'] + " " + hand[1]['name'] + " " + hand[2]['name']
+    return(hand[0]['name'] + ' ' + hand[1]['name'] + ' ' + hand[2]['name'])
+
+
+def printHand6(hand1, hand2):
+    return(hand1[0]['name'] + ' ' + hand1[1]['name'] + ' ' + hand1[2]['name'] +
+           ' ' + hand2[0]['name'] + ' ' + hand2[1]['name'] + ' ' +
+           hand2[2]['name'])
+
+
+# score hand dict:
+# score['has'] = True or False, if we have the hand we checked
+# score['handval'] = (7..0, RoyalFlush=7 StraightFlush=6 FourofaKind=5
+# FullHouse=4, Flush=3 Straight=2 ThreeofaKind=1 NonQual=0
+def hasRoyalFlush6(hand1, hand2):
+    score = {}
+    score['has'] = False
+    hand6 = {0: hand1[0], 1: hand1[1], 2: hand1[2],
+             3: hand2[0], 4: hand2[1], 5: hand2[2]}
+    faceCards = [10, 11, 12, 13, 14]
+    for suit in suits:
+        c = 0
+        for i in hand6.keys():
+            if hand6[i]['suit'] == suit:
+                c += 1
+        # print('we have {} {}'.format(c, suit))
+        if c >= 5:
+            d = 0
+            for i in hand6.keys():
+                if hand6[i]['val'] in faceCards and hand6[i]['suit'] == suit:
+                    d += 1
+            if d == 5:
+                score['has'] = True
+                score['handval'] = 7
+                return score
+    return score
+
+
+def hasStraightFlush6(hand1, hand2):
+    score = {}
+    score['has'] = False
+    hand6 = {0: hand1[0], 1: hand1[1], 2: hand1[2],
+             3: hand2[0], 4: hand2[1], 5: hand2[2]}
+
+    for suit in suits:
+        a = []
+        c = 0
+        for i in hand6.keys():
+            if hand6[i]['suit'] == suit:
+                c += 1
+                a.append(hand6[i]['val'])
+        if c >= 5:
+            a.sort()
+            # could have 5 or 6 cards of the suit
+            consec = 1
+            prev = -1
+            for j in xrange(len(a)):
+                if a[j] == prev + 1:
+                    consec += 1
+                    if consec >= 5:
+                        score['has'] = True
+                        score['handval'] = 6
+                        return score
+                else:
+                    consec = 1  # reset consec counter
+                prev = a[j]
+    return score
+
+
+def hasFourofaKind(hand1, hand2):
+    score = {}
+    score['has'] = False
+    hand6 = {0: hand1[0], 1: hand1[1], 2: hand1[2],
+             3: hand2[0], 4: hand2[1], 5: hand2[2]}
+
+    c = {}
+    for i in hand6.keys():
+        try:
+            c[hand6[i]['val']] += 1
+        except:
+            c[hand6[i]['val']] = 1
+    for i in c.keys():
+        if c[i] >= 4:
+            score['has'] = True
+            score['handval'] = 5
+            return score
+    return score
+
+
+def hasFullHouse(hand1, hand2):
+    score = {}
+    score['has'] = False
+    hand6 = {0: hand1[0], 1: hand1[1], 2: hand1[2],
+             3: hand2[0], 4: hand2[1], 5: hand2[2]}
+
+    c = {}
+    for i in hand6.keys():
+        try:
+            c[hand6[i]['val']] += 1
+        except:
+            c[hand6[i]['val']] = 1
+    haveThree = 0
+    havePair = 0
+    for j in c.keys():
+        if c[j] == 3:
+            haveThree = 1
+            del c[j]
+            break
+    for j in c.keys():
+        if c[j] >= 2:
+            havePair = 1
+            break
+    if haveThree == 1 and havePair == 1:
+        score['has'] = True
+        score['handval'] = 4
+        return score
+    return score
+
+
+def hasFlush6(hand1, hand2):
+    score = {}
+    score['has'] = False
+    hand6 = {0: hand1[0], 1: hand1[1], 2: hand1[2],
+             3: hand2[0], 4: hand2[1], 5: hand2[2]}
+
+    for suit in suits:
+        c = 0
+        for i in hand6.keys():
+            if hand6[i]['suit'] == suit:
+                c += 1
+        if c >= 5:
+            score['has'] = True
+            score['handval'] = 3
+            return score
+    return score
+
+
+def hasStraight6(hand1, hand2):
+    score = {}
+    score['has'] = False
+    a = [hand1[0]['val'], hand1[1]['val'], hand1[2]['val'],
+         hand2[0]['val'], hand2[1]['val'], hand2[2]['val']]
+    a.sort()
+    consec = 1
+    prev = -1
+    for i in xrange(len(a)):
+        if a[i] == prev + 1:
+            consec += 1
+            if consec >= 5:
+                score['has'] = True
+                score['handval'] = 2
+                return score
+        else:
+            consec = 1  # reset consec counter
+        prev = a[i]
+    return score
+
+
+def hasThreeofaKind6(hand1, hand2):
+    score = {}
+    score['has'] = False
+    hand6 = {0: hand1[0], 1: hand1[1], 2: hand1[2],
+             3: hand2[0], 4: hand2[1], 5: hand2[2]}
+
+    c = {}
+    for i in hand6.keys():
+        try:
+            c[hand6[i]['val']] += 1
+        except:
+            c[hand6[i]['val']] = 1
+    for i in c.keys():
+        if c[i] >= 3:
+            score['has'] = True
+            score['handval'] = 1
+            return score
+    return score
 
 
 # score hand dict:
@@ -347,6 +536,46 @@ def printEvaluation(name, handText, hand):
         print('{} has a {}! {}'.format(name, handText, hand))
 
 
+def evaluateHand6(hand1, hand2, name):
+    x = {}
+    x['has'] = 0
+    x = hasRoyalFlush6(hand1, hand2)
+    if x['has']:
+        printEvaluation(name, handMap6[7], printHand6(hand1, hand2))
+        return x
+    x = hasStraightFlush6(hand1, hand2)
+    if x['has']:
+        printEvaluation(name, handMap6[6], printHand6(hand1, hand2))
+        return x
+    x = hasFourofaKind(hand1, hand2)
+    if x['has']:
+        printEvaluation(name, handMap6[5], printHand6(hand1, hand2))
+        return x
+    x = hasFullHouse(hand1, hand2)
+    if x['has']:
+        printEvaluation(name, handMap6[4], printHand6(hand1, hand2))
+        return x
+    x = hasFlush6(hand1, hand2)
+    if x['has']:
+        printEvaluation(name, handMap6[3], printHand6(hand1, hand2))
+        return x
+    x = hasStraight6(hand1, hand2)
+    if x['has']:
+        printEvaluation(name, handMap6[2], printHand6(hand1, hand2))
+        return x
+    x = hasThreeofaKind6(hand1, hand2)
+    if x['has']:
+        printEvaluation(name, handMap6[1], printHand6(hand1, hand2))
+        return x
+    printEvaluation(name, handMap6[0], printHand6(hand1, hand2))
+    x['handval'] = 0
+    return x
+#    x = hasStraightFlush6(hand1, hand2)
+#    if x['has']:
+#        printEvaluation6(name, handMap6[5], printHand6(hand1, hand2))
+#        return x
+
+
 def evaluateHand(hand, name):
     x = {}
     x['has'] = 0
@@ -434,7 +663,7 @@ def checkAntePlay(player, dealer, betType, betAmt):
         return('Player loses {} bet ({})'.format(betType, -betAmt), loss)
 
 
-def checkPairPlus(player, table, betAmt):
+def checkPPBonus6(player, table, betType, betAmt):
     # returns (Text, Value)
     # Text describes result and net gain/lossfor this bet
     # Value = betAmt * paytable['handval'] for win, 0 for loss
@@ -442,66 +671,75 @@ def checkPairPlus(player, table, betAmt):
         1: {7: 40, 6: 40, 5: 30, 4: 6, 3: 4, 2: 1, 1: 0, 0: 0},
         2: {7: 35, 6: 35, 5: 33, 4: 6, 3: 4, 2: 1, 1: 0, 0: 0},
         3: {7: 40, 6: 40, 5: 30, 4: 6, 3: 3, 2: 1, 1: 0, 0: 0},
+        # PairPlus above (1-3), 6 Card Bonus below (4-6)
+        4: {7: 1000, 6: 200, 5: 100, 4: 20, 3: 15, 2: 10, 1: 7, 0: 0},
+        5: {7: 2000, 6: 200, 5: 50, 4: 25, 3: 15, 2: 10, 1: 5, 0: 0},
+        6: {7: 1000, 6: 200, 5: 50, 4: 25, 3: 15, 2: 10, 1: 5, 0: 0},
     }
 
-    if player['handval'] >= 2:
+    if betType == 'PairPlus':
+        winningHand = 2
+    elif betType == '6 Card Bonus':
+        winningHand = 1
+
+    if player['handval'] >= winningHand:
         win = paytable[table][player['handval']] * betAmt + betAmt
-        return ('Player wins PairPlus bet (+{})'.format(win),
+        return ('Player wins {} bet (+{})'.format(betType, win),
                 win)
     else:
-        return ('Player loses PairPlus bet ({})'.format(-betAmt), 0)
+        return ('Player loses {} bet ({})'.format(betType, -betAmt), 0)
 
 stats = {
-    # a=anteBet p=playBet pp=pairplusBet t=totalMoney s=strategy:
-    # 0=blind, 1=Q, 2=Q10, 3=Q74, 4=Q64, 5=K
+    # a=anteBet p=playBet pp=pairplusBet b=6cardBet t=totalMoney
+    # s=strategy: 0=blind, 1=Q, 2=Q10, 3=Q74, 4=Q64, 5=K
     # g=gamesPlayed w=win l=loss pu=push f=fold al=alive
     # (7..0) = num games with that handval
-    1: {'a': 10, 'p': 10, 'pp': 10, 't': 0,
+    1: {'a': 10, 'p': 10, 'pp': 10, 'b': 5, 't': 0,
         's': 0, 'g': 0, 'w': 0, 'l': 0, 'pu': 0, 'f': 0, 'al': 1,
         7: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0},
-    2: {'a': 20, 'p': 20, 'pp': 20, 't': 0,
+    2: {'a': 20, 'p': 20, 'pp': 20, 'b': 5, 't': 0,
         's': 3, 'g': 0, 'w': 0, 'l': 0, 'pu': 0, 'f': 0, 'al': 1,
         7: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0},
-    3: {'a': 10, 'p': 10, 'pp': 5, 't': 0,
+    3: {'a': 10, 'p': 10, 'pp': 5, 'b': 5, 't': 0,
         's': 4, 'g': 0, 'w': 0, 'l': 0, 'pu': 0, 'f': 0, 'al': 1,
         7: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0},
-    4: {'a': 10, 'p': 10, 'pp': 5, 't': 0,
+    4: {'a': 10, 'p': 10, 'pp': 5, 'b': 5, 't': 0,
         's': 3, 'g': 0, 'w': 0, 'l': 0, 'pu': 0, 'f': 0, 'al': 1,
         7: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0},
-    5: {'a': 15, 'p': 15, 'pp': 10, 't': 0,
+    5: {'a': 15, 'p': 15, 'pp': 10, 'b': 10, 't': 0,
         's': 4, 'g': 0, 'w': 0, 'l': 0, 'pu': 0, 'f': 0, 'al': 1,
         7: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0},
-    6: {'a': 15, 'p': 15, 'pp': 10, 't': 0,
+    6: {'a': 15, 'p': 15, 'pp': 10, 'b': 10, 't': 0,
         's': 1, 'g': 0, 'w': 0, 'l': 0, 'pu': 0, 'f': 0, 'al': 1,
         7: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0},
-    7: {'a': 15, 'p': 15, 'pp': 5, 't': 0,
+    7: {'a': 15, 'p': 15, 'pp': 5, 'b': 0, 't': 0,
         's': 2, 'g': 0, 'w': 0, 'l': 0, 'pu': 0, 'f': 0, 'al': 1,
         7: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0},
-    8: {'a': 15, 'p': 15, 'pp': 15, 't': 0,
+    8: {'a': 15, 'p': 15, 'pp': 15, 'b': 5, 't': 0,
         's': 3, 'g': 0, 'w': 0, 'l': 0, 'pu': 0, 'f': 0, 'al': 1,
         7: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0},
-    9: {'a': 50, 'p': 50, 'pp': 10, 't': 0,
+    9: {'a': 50, 'p': 50, 'pp': 10, 'b': 10, 't': 0,
         's': 5, 'g': 0, 'w': 0, 'l': 0, 'pu': 0, 'f': 0, 'al': 1,
         7: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0},
-    10: {'a': 50, 'p': 50, 'pp': 10, 't': 0,
+    10: {'a': 50, 'p': 50, 'pp': 10, 'b': 10, 't': 0,
          's': 3, 'g': 0, 'w': 0, 'l': 0, 'pu': 0, 'f': 0, 'al': 1,
          7: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0},
-    11: {'a': 10, 'p': 10, 'pp': 20, 't': 0,
+    11: {'a': 10, 'p': 10, 'pp': 20, 'b': 20, 't': 0,
          's': 3, 'g': 0, 'w': 0, 'l': 0, 'pu': 0, 'f': 0, 'al': 1,
          7: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0},
-    12: {'a': 10, 'p': 10, 'pp': 20, 't': 0,
+    12: {'a': 10, 'p': 10, 'pp': 20, 'b': 5, 't': 0,
          's': 4, 'g': 0, 'w': 0, 'l': 0, 'pu': 0, 'f': 0, 'al': 1,
          7: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0},
-    13: {'a': 10, 'p': 10, 'pp': 5, 't': 0,
+    13: {'a': 10, 'p': 10, 'pp': 5, 'b': 5, 't': 0,
          's': 3, 'g': 0, 'w': 0, 'l': 0, 'pu': 0, 'f': 0, 'al': 1,
          7: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0},
-    14: {'a': 20, 'p': 20, 'pp': 20, 't': 0,
+    14: {'a': 20, 'p': 20, 'pp': 20, 'b': 5, 't': 0,
          's': 3, 'g': 0, 'w': 0, 'l': 0, 'pu': 0, 'f': 0, 'al': 1,
          7: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0},
-    15: {'a': 40, 'p': 40, 'pp': 40, 't': 0,
+    15: {'a': 40, 'p': 40, 'pp': 40, 'b': 0, 't': 0,
          's': 4, 'g': 0, 'w': 0, 'l': 0, 'pu': 0, 'f': 0, 'al': 1,
          7: 0, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0},
-    16: {'a': 40, 'p': 40, 'pp': 20, 't': 0,
+    16: {'a': 40, 'p': 40, 'pp': 20, 'b': 10, 't': 0,
          's': 3, 'g': 0, 'w': 0, 'l': 0, 'pu': 0, 'f': 0, 'al': 1,
          7: 3, 6: 0, 5: 0, 4: 0, 3: 0, 2: 0, 1: 0, 0: 0},
 }
@@ -533,8 +771,11 @@ while game < games:
         # last player is dealer, max = 17
         numPlayers = 17
 
-        # pairplus pay table
+        # PairPlus pay table
         ppTable = 3
+
+        # 6 Card Bonus pay table
+        bonus6Table = 6
 
         # deal $numPlayers hands
         c = 0  # count of cards
@@ -554,35 +795,61 @@ while game < games:
                     stats[player]['g'] += 1
 
                     start = stats[player]['t']
-                    print('Player {} starts with {} playing strategy {}'.format(player, stats[player]['t'], strategyMap[stats[player]['s']]))
-                    print('Player places ante bet ({}) pairplus bet ({})'.format(stats[player]['a'], stats[player]['pp']))
+                    print('Player {} starts with {} playing strategy {}'.
+                          format(player, stats[player]['t'],
+                                 strategyMap[stats[player]['s']]))
+                    print('Player places Ante ({}) PairPlus ({}) 6 Card Bonus bet ({})'.
+                          format(stats[player]['a'], stats[player]['pp'],
+                                 stats[player]['b']))
                     stats[player]['t'] -= stats[player]['a']
                     x = evaluateHand(hands[player], 'Player {}'.format(player))
                     stats[player][x['handval']] += 1
 
                     if playable(hands[player], stats[player]['s']):
 
-                        print('Player places play bet ({})'.format(stats[player]['p']))
-                        print('Player playing {} vs Dealer {}'.format(printHand(hands[player]), printHand(hands[numPlayers])))
-                        anteText, anteVal = checkAntePlay(x, dealer, 'Ante', stats[player]['a'])
+                        print('Player places Play bet ({})'.
+                              format(stats[player]['p']))
+                        print('Player playing {} vs Dealer {}'.
+                              format(printHand(hands[player]),
+                                     printHand(hands[numPlayers])))
+                        anteText, anteVal = checkAntePlay(x, dealer, 'Ante',
+                                                          stats[player]['a'])
                         print('{}'.format(anteText))
                         stats[player]['t'] += anteVal
 
                         stats[player]['t'] -= stats[player]['p']
-                        playText, playVal = checkAntePlay(x, dealer, 'Play', stats[player]['p'])
+                        playText, playVal = checkAntePlay(x, dealer, 'Play',
+                                                          stats[player]['p'])
                         print('{}'.format(playText))
                         stats[player]['t'] += playVal
 
-                        stats[player]['t'] -= stats[player]['pp']
-                        pairplusText, pairplusVal = checkPairPlus(x, ppTable, stats[player]['pp'])
-                        print('{}'.format(pairplusText))
-                        stats[player]['t'] += pairplusVal
+                        if stats[player]['pp'] > 0:
+                            # check for pair plus only if we bet it
+                            stats[player]['t'] -= stats[player]['pp']
+                            ppText, ppVal = checkPPBonus6(x, ppTable,
+                                                          'PairPlus',
+                                                          stats[player]['pp'])
+                            print('{}'.format(ppText))
+                            stats[player]['t'] += ppVal
 
                     else:
                         # Fold, forfeit pairplus bet
-                        print('Player folds, hand {} strategy {}'.format(printHand(hands[player]), strategyMap[stats[player]['s']]))
+                        print('Player folds, hand {} strategy {}'.
+                              format(printHand(hands[player]),
+                                     strategyMap[stats[player]['s']]))
                         stats[player]['t'] -= stats[player]['pp']
-                        # stats[player]['f'] += 1
+                        stats[player]['f'] += 1
+
+                    if stats[player]['b'] > 0:
+                        # check for 6 Card bonus as long as we bet it
+                        x = evaluateHand6(hands[player], hands[numPlayers],
+                                          'Player {}'.format(player))
+                        stats[player]['t'] -= stats[player]['b']
+                        bonus6Text, bonus6Val = checkPPBonus6(x, bonus6Table,
+                                                              '6 Card Bonus',
+                                                              stats[player]['b'])
+                        print('{}'.format(bonus6Text))
+                        stats[player]['t'] += bonus6Val
 
                     end = stats[player]['t']
                     res = end - start
@@ -600,7 +867,8 @@ while game < games:
                     if stats[player]['t'] < stats[player]['a'] + stats[player]['p'] + stats[player]['pp']:
                         stats[player]['al'] = 0
 
-                    print('Player {} started with {} and ended with {} ({})'.format(player, start, end, res))
+                    print('Player {} started with {} and ended with {} ({})'.
+                          format(player, start, end, res))
                     print('')
 
         print('Game number {} done!'.format(game))
@@ -609,11 +877,12 @@ while game < games:
         break
 
 for player in stats.keys():
-    print('Player {} played {} of {} games ({}%) and ended with {} ({}% house edge)'.format(player, stats[player]['g'], (game), (stats[player]['g'] / (game) * 100), stats[player]['t'], (stats[player]['t'] - startAmt) / -stats[player]['g']))
-    print('Player {} played strategy {}, Ante/Play {} PairPlus {} ({}/hand)'.format(player, strategyMap[stats[player]['s']], stats[player]['a'], stats[player]['pp'], (2 * stats[player]['a'] + stats[player]['pp'])))
+    print('Player {0} played {1} of {2} games ({3:.2f}%) and ended with {4} ({5:.2f}% house edge)'.format(player, stats[player]['g'], (game), (stats[player]['g'] / (game) * 100), stats[player]['t'], (stats[player]['t'] - startAmt) / -stats[player]['g']))
+    print('Player {} played strategy {}'.format(player, strategyMap[stats[player]['s']]))
+    print('Player {} bet Ante/Play {}, PairPlus {}, 6 Card Bonus {} ({}/hand)'.format(player, stats[player]['a'], stats[player]['pp'], stats[player]['b'], ((2 * stats[player]['a']) + stats[player]['pp'] + stats[player]['b'])))
     for k in handMap.keys():
-        print('Player {} had {} x {} ({}%)'.format(player, stats[player][k], handMap[k], (stats[player][k] / stats[player]['g']) * 100))
-    print('Player {} had {} wins ({}%), {} losses ({}%), {} pushes ({}%), and {} folds ({}%)'.format(player, stats[player]['w'], (stats[player]['w'] / stats[player]['g'] * 100), stats[player]['l'], (stats[player]['l'] / stats[player]['g'] * 100), stats[player]['pu'], (stats[player]['pu'] / stats[player]['g'] * 100), stats[player]['f'], (stats[player]['f'] / stats[player]['g'] * 100)))
+        print('Player {0} had {1} x {2} ({3:.2f}%)'.format(player, stats[player][k], handMap[k], (stats[player][k] / stats[player]['g']) * 100))
+    print('Player {0} had {1} wins ({2:.2f}%), {3} losses ({4:.2f}%), {5} pushes ({6:.2f}%), and {7} folds ({8:.2f}%)'.format(player, stats[player]['w'], (stats[player]['w'] / stats[player]['g'] * 100), stats[player]['l'], (stats[player]['l'] / stats[player]['g'] * 100), stats[player]['pu'], (stats[player]['pu'] / stats[player]['g'] * 100), stats[player]['f'], (stats[player]['f'] / stats[player]['g'] * 100)))
     print('')
 
 # testHand1 = {
@@ -651,6 +920,80 @@ for player in stats.keys():
 #   1: {'name':'5H', 'suit':'Hearts', 'val':5},
 #   2: {'name':'2S', 'suit':'Spades', 'val':2},
 # }
+
+# testHand1 = {
+#    0: {'name':'QH', 'suit':'Hearts', 'val':12},
+#    1: {'name':'KH', 'suit':'Hearts', 'val':13},
+#    2: {'name':'JH', 'suit':'Hearts', 'val':11},
+#  }
+# testHand2 = {
+#    0: {'name':'AH', 'suit':'Hearts', 'val':14},
+#    1: {'name':'6H', 'suit':'Hearts', 'val':6},
+#    2: {'name':'10H', 'suit':'Hearts', 'val':10},
+# }
+# testHand3 = {
+#    0: {'name':'7H', 'suit':'Hearts', 'val':7},
+#    1: {'name':'9H', 'suit':'Hearts', 'val':9},
+#    2: {'name':'8H', 'suit':'Hearts', 'val':8},
+# }
+# testHand4 = {
+#    0: {'name':'6H', 'suit':'Hearts', 'val':6},
+#    1: {'name':'2H', 'suit':'Hearts', 'val':2},
+#    2: {'name':'5H', 'suit':'Hearts', 'val':5},
+# }
+# testHand5 = {
+#    0: {'name':'6D', 'suit':'Diamonds', 'val':6},
+#    1: {'name':'6S', 'suit':'Spades', 'val':6},
+#    2: {'name':'6C', 'suit':'Clubs', 'val':6},
+# }
+# testHand6 = {
+#    0: {'name':'7D', 'suit':'Diamonds', 'val':7},
+#    1: {'name':'3S', 'suit':'Spades', 'val':3},
+#    2: {'name':'7C', 'suit':'Clubs', 'val':7},
+# }
+# testHand7 = {
+#    0: {'name':'7H', 'suit':'Hearts', 'val':7},
+#    1: {'name':'9D', 'suit':'Diamonds', 'val':9},
+#    2: {'name':'3C', 'suit':'Clubs', 'val':3},
+# }
+# testHand8 = {
+#    0: {'name':'4H', 'suit':'Hearts', 'val':4},
+#    1: {'name':'5D', 'suit':'Diamonds', 'val':5},
+#    2: {'name':'6C', 'suit':'Clubs', 'val':6},
+# }
+# testHand9 = {
+#    0: {'name':'4H', 'suit':'Hearts', 'val':4},
+#    1: {'name':'5H', 'suit':'Hearts', 'val':5},
+#    2: {'name':'8C', 'suit':'Clubs', 'val':8},
+# }
+# testHand10 = {
+#    0: {'name':'9H', 'suit':'Hearts', 'val':9},
+#    1: {'name':'10H', 'suit':'Hearts', 'val':10},
+#    2: {'name':'2H', 'suit':'Hearts', 'val':2},
+# }
+# testHand11 = {
+#    0: {'name':'4H', 'suit':'Hearts', 'val':4},
+#    1: {'name':'5H', 'suit':'Hearts', 'val':5},
+#    2: {'name':'2C', 'suit':'Clubs', 'val':2},
+# }
+# testHand12 = {
+#    0: {'name':'8H', 'suit':'Hearts', 'val':8},
+#    1: {'name':'8D', 'suit':'Diamonds', 'val':8},
+#    2: {'name':'8S', 'suit':'Spades', 'val':8},
+# }
+# evaluateHand6(testHand1, testHand2, 'Bob')
+# print('')
+# evaluateHand6(testHand3, testHand4, 'Jon')
+# print('')
+# evaluateHand6(testHand4, testHand5, 'Fifi')
+# print('')
+# evaluateHand6(testHand7, testHand6, 'Bobo')
+# print('')
+# evaluateHand6(testHand7, testHand8, 'Sally')
+# print('')
+# evaluateHand6(testHand9, testHand10, 'Flooshie')
+# print('')
+# evaluateHand6(testHand11, testHand12, 'Trey')
 # testHand8 = {
 #   0: deck[3],
 #   1: deck[5],
@@ -672,6 +1015,3 @@ for player in stats.keys():
 # x = hasQualifyingHighCard(testHand7)
 # print('has qual ? {} {} {}'.format(x['has'],x['1'], printHand(testHand7)))
 # print('\n')
-#
-# printHand(testHand1)
-# zz = evaluateHand(testHand1, 'Test1')
